@@ -1169,11 +1169,22 @@ static void __do_IRQ_guest(int irq)
         cpumask_set_cpu(smp_processor_id(), action->cpu_eoi_map);
     }
 
+
     for ( i = 0; i < action->nr_guests; i++ )
     {
         struct pirq *pirq;
-
+	
         d = action->guest[i];
+/* KevinBoos
+	printk("KevinBoos %s sending irq to guest %d/%d, domain %d",
+		__FUNCTION__,
+		i,
+		action->nr_guests,
+		d->domain_id);
+		*/
+
+
+
         pirq = pirq_info(d, domain_irq_to_pirq(d, irq));
         if ( (action->ack_type != ACKTYPE_NONE) &&
              !test_and_set_bool(pirq->masked) )
