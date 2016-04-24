@@ -645,6 +645,17 @@ struct vcpu_info {
 typedef struct vcpu_info vcpu_info_t;
 #endif
 
+
+/* KevinBoos */
+/* one struct instance per domain */
+struct shared_scheduler_info {
+	domid_t domid;
+	int runstate;
+	signed long long end_time; /* defined as s_time_t elsewhere */
+	int latest_vcpu_id; /* not really necessary */
+};
+
+
 /*
  * `incontents 200 startofday_shared Start-of-day shared data structure
  * Xen/kernel shared data -- pointer provided in start_info.
@@ -706,6 +717,10 @@ struct shared_info {
 #endif
 
     struct arch_shared_info arch;
+
+    /* KevinBoos: added for scheduler info */
+    /* hard cap at 4 domains, we do not have unlimited space */
+    struct shared_scheduler_info sched_infos[4]; 
 
 };
 #ifndef __XEN__
