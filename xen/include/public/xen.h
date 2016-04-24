@@ -651,7 +651,7 @@ typedef struct vcpu_info vcpu_info_t;
 struct shared_scheduler_info {
 	domid_t domid;
 	int runstate;
-	signed long long end_time; /* defined as s_time_t elsewhere */
+	signed long end_time; /* defined as s_time_t elsewhere */
 	int latest_vcpu_id; /* not really necessary */
 };
 

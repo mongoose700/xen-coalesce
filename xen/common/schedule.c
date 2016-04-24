@@ -1280,6 +1280,7 @@ static void schedule(void)
             }
 	    printk("KevinBoos %s: got ref to dom0=%p, inited sched_info structs\n", __FUNCTION__, dom0);
 	    printk("KevinBoos %s: sizeof(struct shared_info)=%lu\n", __FUNCTION__, sizeof(struct shared_info));
+	    printk("KevinBoos %s: sizeof(struct shared_scheduler_info)=%lu\n", __FUNCTION__, sizeof(struct shared_scheduler_info));
 	    printk("KevinBoos %s: sched_infos domid = %d %d %d %d\n", __FUNCTION__, 
         	dom0->shared_info->native.sched_infos[0].domid,
         	dom0->shared_info->native.sched_infos[1].domid,
@@ -1326,7 +1327,7 @@ static void schedule(void)
                     dom0->shared_info->native.sched_infos[i].end_time = now + next_slice.time;
                     dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running;
                     dom0->shared_info->native.sched_infos[i].latest_vcpu_id = next->vcpu_id;
-		//    printk("KevinBoos %s: updated existing dom struct i=%d domid=%hu end_time=%lld, runstate=%d, latest_vcpu_id=%d\n",
+		//    printk("KevinBoos %s: updated existing dom struct i=%d domid=%hu end_time=%ld, runstate=%d, latest_vcpu_id=%d\n",
 		//	    __FUNCTION__, i,
 		//	    dom0->shared_info->native.sched_infos[i].domid,
 		//	    dom0->shared_info->native.sched_infos[i].end_time,
@@ -1341,7 +1342,7 @@ static void schedule(void)
                     dom0->shared_info->native.sched_infos[i].end_time = now + next_slice.time;
                     dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running;
                     dom0->shared_info->native.sched_infos[i].latest_vcpu_id = next->vcpu_id;
-		    printk("KevinBoos %s: added new dom struct i=%d domid=%hu end_time=%lld, runstate=%d, latest_vcpu_id=%d\n",
+		    printk("KevinBoos %s: added new dom struct i=%d domid=%hu end_time=%ld, runstate=%d, latest_vcpu_id=%d\n",
 			    __FUNCTION__, i,
 			    dom0->shared_info->native.sched_infos[i].domid,
 			    dom0->shared_info->native.sched_infos[i].end_time,
