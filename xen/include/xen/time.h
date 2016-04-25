@@ -50,6 +50,7 @@ struct tm {
 };
 struct tm gmtime(unsigned long t);
 struct tm wallclock_time(uint64_t *ns);
+uint64_t wallclock_time_sec(uint64_t *ns); // KevinBoos
 
 #define SYSTEM_TIME_HZ  1000000000ULL
 #define NOW()           ((s_time_t)get_s_time())

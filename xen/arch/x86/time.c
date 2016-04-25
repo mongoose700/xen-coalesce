@@ -1622,6 +1622,12 @@ uint64_t get_localtime_us(struct domain *d)
            / 1000UL;
 }
 
+/* Return nanosecs after 00:00:00 localtime, 1 January, 1970. */
+uint64_t get_localtime_ns(struct domain *d)
+{
+    return (SECONDS(wc_sec + d->time_offset_seconds) + wc_nsec + NOW());
+}
+
 unsigned long get_sec(void)
 {
     return wc_sec + (wc_nsec + NOW()) / 1000000000ULL;
@@ -1729,6 +1735,22 @@ struct tm wallclock_time(uint64_t *ns)
         *ns = nsec;
 
     return gmtime(seconds);
+}
+
+uint64_t wallclock_time_sec(uint64_t *ns)
+{
+    uint64_t seconds, nsec;
+
+    if ( !wc_sec )
+        return  0;
+
+    seconds = NOW() + SECONDS(wc_sec) + wc_nsec;
+    nsec = do_div(seconds, 1000000000);
+
+    if ( ns )
+        *ns = nsec;
+
+    return seconds;
 }
 
 /*

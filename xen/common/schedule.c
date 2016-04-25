@@ -1213,9 +1213,10 @@ static void vcpu_periodic_timer_work(struct vcpu *v)
 static struct domain *dom0 = NULL; // KevinBoos
 static void schedule(void)
 {
-    //KevinBoos: start
-    static int print_this_time = 0; // KevinBoos
-    //KevinBoos: end
+	//KevinBoos: start
+	//static int print_this_time = 0;
+	uint64_t sec, nsec;
+	//KevinBoos: end
 
     struct vcpu          *prev = current, *next = NULL;
     s_time_t              now = NOW();
@@ -1226,6 +1227,7 @@ static void schedule(void)
     spinlock_t           *lock;
     struct task_slice     next_slice;
     int cpu = smp_processor_id();
+
 
     ASSERT_NOT_IN_ATOMIC();
 
@@ -1263,6 +1265,9 @@ static void schedule(void)
 
     sd->curr = next;
 
+    sec = wallclock_time_sec(&nsec); // KevinBoos
+    nsec += sec * 1000ULL * 1000ULL * 1000ULL; // KevinBoos
+
     // KevinBoos: dirty hack to get persistent pointer to dom0 
     if (!dom0) {
 	if (prev->domain->domain_id == 0)
@@ -1278,91 +1283,92 @@ static void schedule(void)
         	dom0->shared_info->native.sched_infos[i].domid = 12345;
 		// could init other values if needed
             }
-	    printk("KevinBoos %s: got ref to dom0=%p, inited sched_info structs\n", __FUNCTION__, dom0);
-	    printk("KevinBoos %s: sizeof(struct shared_info)=%lu\n", __FUNCTION__, sizeof(struct shared_info));
-	    printk("KevinBoos %s: sizeof(struct shared_scheduler_info)=%lu\n", __FUNCTION__, sizeof(struct shared_scheduler_info));
-	    printk("KevinBoos %s: sched_infos domid = %d %d %d %d\n", __FUNCTION__, 
-        	dom0->shared_info->native.sched_infos[0].domid,
-        	dom0->shared_info->native.sched_infos[1].domid,
-        	dom0->shared_info->native.sched_infos[2].domid,
-        	dom0->shared_info->native.sched_infos[3].domid);
+	//    printk("KevinBoos %s: got ref to dom0=%p, inited sched_info structs\n", __FUNCTION__, dom0);
+	//    printk("KevinBoos %s: sizeof(struct shared_info)=%lu\n", __FUNCTION__, sizeof(struct shared_info));
+	//    printk("KevinBoos %s: sizeof(struct shared_scheduler_info)=%lu\n", __FUNCTION__, sizeof(struct shared_scheduler_info));
+	//    printk("KevinBoos %s: sched_infos domid = %d %d %d %d\n", __FUNCTION__, 
+        //	dom0->shared_info->native.sched_infos[0].domid,
+        //	dom0->shared_info->native.sched_infos[1].domid,
+        //	dom0->shared_info->native.sched_infos[2].domid,
+        //	dom0->shared_info->native.sched_infos[3].domid);
 	}
 
     }
 
-    
-
     // KevinBoos: set only dom0's shared_scheduler_info
     if  (dom0) {   // must have a reference to dom0
-        if (next->domain->domain_id != 0 && next->domain->domain_id != DOMID_IDLE) {
-                print_this_time++;
-                if (print_this_time == 20) {
-            	    print_this_time = 0;
-            	//    printk("KevinBoos %s: prev: vcpu=%d dom=%hu(%p) entry_time(%d)=%ld\n    next_vcpu=%d dom=%hu(%p) entry_time(%d)=%ld\n    next time=%ld\n",
-            	//	__FUNCTION__,
-            	//	prev->vcpu_id, prev->domain->domain_id, prev->domain, prev->runstate.state, prev->runstate.state_entry_time, 
-            	//	next->vcpu_id, next->domain->domain_id, next->domain, next->runstate.state, next->runstate.state_entry_time, 
-            	//	next_slice.time
-            	//	);
-                }
-        }
-
-        for (int i = 0; i < 4; i++) {
-	    // first  update the prev's domain info, the one about to be unscheduled
-	    // don't update details for dom0 or idle domain
-	    if ((prev->domain->domain_id != DOMID_IDLE) && (prev->domain->domain_id != 0)) {
-                if (dom0->shared_info->native.sched_infos[i].domid == prev->domain->domain_id) {
-                    dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_offline; // mark the prev task as not running
-                    dom0->shared_info->native.sched_infos[i].end_time = -1;
-	        }
-	    }
+        //if (next->domain->domain_id != 0 && next->domain->domain_id != DOMID_IDLE) {
+        //        print_this_time++;
+        //        if (print_this_time == 20) {
+        //    	    print_this_time = 0;
+        //    	//    printk("KevinBoos %s: prev: vcpu=%d dom=%hu(%p) entry_time(%d)=%ld\n    next_vcpu=%d dom=%hu(%p) entry_time(%d)=%ld\n    next time=%ld\n",
+        //    	//	__FUNCTION__,
+        //    	//	prev->vcpu_id, prev->domain->domain_id, prev->domain, prev->runstate.state, prev->runstate.state_entry_time, 
+        //    	//	next->vcpu_id, next->domain->domain_id, next->domain, next->runstate.state, next->runstate.state_entry_time, 
+        //    	//	next_slice.time
+        //    	//	);
+        //        }
+        //}
 
 
+			for (int i = 0; i < 4; i++) {
+					// first  update the prev's domain info, the one about to be unscheduled
+					// don't update details for dom0 or idle domain
+					if ((prev->domain->domain_id != DOMID_IDLE) && (prev->domain->domain_id != 0)) {
+							if (dom0->shared_info->native.sched_infos[i].domid == prev->domain->domain_id) {
+									dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_offline; // mark the prev task as not running
+									dom0->shared_info->native.sched_infos[i].end_time = -1;
+							}
+					}
 
-            // here: update details for the "next" domain, the one about to be scheduled in
-	    // don't update details for dom0 or idle domain
-	    if ((next->domain->domain_id != DOMID_IDLE) && (next->domain->domain_id != 0)) {
-                if (dom0->shared_info->native.sched_infos[i].domid == next->domain->domain_id) {
-	            // update an existing domain's shared_scheduler_info struct
-                    dom0->shared_info->native.sched_infos[i].end_time = now + next_slice.time;
-                    dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running;
-                    dom0->shared_info->native.sched_infos[i].latest_vcpu_id = next->vcpu_id;
-		//    printk("KevinBoos %s: updated existing dom struct i=%d domid=%hu end_time=%ld, runstate=%d, latest_vcpu_id=%d\n",
-		//	    __FUNCTION__, i,
-		//	    dom0->shared_info->native.sched_infos[i].domid,
-		//	    dom0->shared_info->native.sched_infos[i].end_time,
-		//	    dom0->shared_info->native.sched_infos[i].runstate,
-		//	    dom0->shared_info->native.sched_infos[i].latest_vcpu_id);
 
-		    break;
-                }
-	        else if (dom0->shared_info->native.sched_infos[i].domid == 12345) {
-	            // first time updating this domain's shared_scheduler_info struct
-                    dom0->shared_info->native.sched_infos[i].domid = next->domain->domain_id;
-                    dom0->shared_info->native.sched_infos[i].end_time = now + next_slice.time;
-                    dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running;
-                    dom0->shared_info->native.sched_infos[i].latest_vcpu_id = next->vcpu_id;
-		    printk("KevinBoos %s: added new dom struct i=%d domid=%hu end_time=%ld, runstate=%d, latest_vcpu_id=%d\n",
-			    __FUNCTION__, i,
-			    dom0->shared_info->native.sched_infos[i].domid,
-			    dom0->shared_info->native.sched_infos[i].end_time,
-			    dom0->shared_info->native.sched_infos[i].runstate,
-			    dom0->shared_info->native.sched_infos[i].latest_vcpu_id);
+					// here: update details for the "next" domain, the one about to be scheduled in
+					// don't update details for dom0 or idle domain
+					if ((next->domain->domain_id != DOMID_IDLE) && (next->domain->domain_id != 0)) {
+							if (dom0->shared_info->native.sched_infos[i].domid == next->domain->domain_id) {
+									// update an existing domain's shared_scheduler_info struct
+									dom0->shared_info->native.sched_infos[i].end_time = nsec + next_slice.time;
+									// don't set runstate here, set it later right before context switch
+									//dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running;
+									dom0->shared_info->native.sched_infos[i].latest_vcpu_id = next->vcpu_id;
 
-		    printk("KevinBoos %s: current sched_infos domid = %d %d %d %d\n", __FUNCTION__, 
-			dom0->shared_info->native.sched_infos[0].domid,
-			dom0->shared_info->native.sched_infos[1].domid,
-			dom0->shared_info->native.sched_infos[2].domid,
-			dom0->shared_info->native.sched_infos[3].domid);
+									//    printk("KevinBoos: wc=%llu updated existing dom struct i=%d domid=%hu end_time=%ld, runstate=%d, latest_vcpu_id=%d\n",
+									//	    (unsigned long long)nsec,
+									//	    i,
+									//	    dom0->shared_info->native.sched_infos[i].domid,
+									//	    dom0->shared_info->native.sched_infos[i].end_time,
+									//	    dom0->shared_info->native.sched_infos[i].runstate,
+									//	    dom0->shared_info->native.sched_infos[i].latest_vcpu_id);
 
-		    break;
-	        }
-	    }
+									break;
+							}
+							else if (dom0->shared_info->native.sched_infos[i].domid == 12345) {
+									// first time updating this domain's shared_scheduler_info struct
+									dom0->shared_info->native.sched_infos[i].domid = next->domain->domain_id;
+									dom0->shared_info->native.sched_infos[i].end_time = nsec + next_slice.time;
+									dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running;
+									dom0->shared_info->native.sched_infos[i].latest_vcpu_id = next->vcpu_id;
+									printk("KevinBoos %s: added new dom struct i=%d domid=%hu end_time=%ld, runstate=%d, latest_vcpu_id=%d\n",
+													__FUNCTION__, i,
+													dom0->shared_info->native.sched_infos[i].domid,
+													dom0->shared_info->native.sched_infos[i].end_time,
+													dom0->shared_info->native.sched_infos[i].runstate,
+													dom0->shared_info->native.sched_infos[i].latest_vcpu_id);
 
-        } // end for loop
+									printk("KevinBoos %s: current sched_infos domid = %d %d %d %d\n", __FUNCTION__, 
+													dom0->shared_info->native.sched_infos[0].domid,
+													dom0->shared_info->native.sched_infos[1].domid,
+													dom0->shared_info->native.sched_infos[2].domid,
+													dom0->shared_info->native.sched_infos[3].domid);
 
-    }
-    // KevinBoos: end
+									break;
+							}
+					}
+
+			} // end for loop
+
+	}
+	// KevinBoos: end
 
 
     if ( next_slice.time >= 0 ) /* -ve means no limit */
@@ -1370,6 +1376,7 @@ static void schedule(void)
 
     if ( unlikely(prev == next) )
     {
+	    printk("KevinBoos: prev==next, continue running!!\n");
         pcpu_schedule_unlock_irq(lock, cpu);
         trace_continue_running(next);
         return continue_running(prev);
@@ -1419,7 +1426,23 @@ static void schedule(void)
 
     vcpu_periodic_timer_work(next);
 
+	// KevinBoos: last-second update of runstates
+	if (dom0) {
+			for (int i = 0; i < 4; i++) {
+					if (dom0->shared_info->native.sched_infos[i].domid == prev->domain->domain_id) {
+							dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_offline; // mark the prev task as not running
+							dom0->shared_info->native.sched_infos[i].end_time = -1;
+					}
+
+					if (dom0->shared_info->native.sched_infos[i].domid == next->domain->domain_id) {
+							dom0->shared_info->native.sched_infos[i].runstate = RUNSTATE_running; 
+					}
+			}
+	}
+
     context_switch(prev, next);
+
+	//KevinBoos: context switch does not return, so we cannot do anything here
 }
 
 void context_saved(struct vcpu *prev)
